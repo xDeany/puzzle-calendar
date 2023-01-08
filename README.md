@@ -17,14 +17,10 @@ python3 -m pip install -r requirements.txt
 
 ## Execution
 
-1. Edit the `MONTH` and `DATE` in `main.py` to whatever spaces should be left uncovered
-2. Run `$ python3 main.py`
+Run `$ python3 main.py` and follow the command line prompts.
 
-### Exhaustive Search
-
-Change `FIND_ALL_SOLUTIONS` to `True` to have the program perform an exhaustive search for all the possible solutions.
-
-**warning:** may take minutes or even hours to complete
+Results are saved to `.solutions/{MONTH}/{DATE}.csv` and, from there, can be loaded into a spreadsheet.
+Conditional formatting can then be used to better display the solutions.
 
 ## Understanding the solution
 
@@ -44,15 +40,15 @@ The output will look similar to the following
 
 ```
 L   L   L   P   P   P
-L   S   S   *   P   P
-L   *   S   T   T   T   T
+L   S   S   Oct P   P
+L   2   S   T   T   T   T
 C   C   S   S   T   O   O
 C   J   J   J   J   O   O
 C   C   Z   Z   J   O   O
 Z   Z   Z
 ```
 
-`*` represents the squares left "uncovered". In the example above, that would be October 2nd
+In the example above, the date left uncovered is October 2nd.
 
 Each of the letters represents the spaces covered by different pieces. Each piece _sort of_ looks like a different letter. e.g. the `L` piece has the shape of an L, but may be oriented differently
 

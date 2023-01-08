@@ -93,10 +93,18 @@ class Board:
                 if tile.piece is not None and tile.piece.name == piece.name:
                     tile.piece = None
 
-    def hasDeadSpace(self) -> bool:
+    def hasDeadSpace(self, pieces: List[Piece]) -> bool:
         """True if there's a region of the board too small for a piece to be placed there (e.g. a single tile)"""
         self.updateNeighbours()
         regions = []
+        
+        # The O piece is the only one that has an area of 6
+        # If that's been placed already, we can be smarter with the maths
+        # Likewise, if that's the only piece left, the area remaining must be 6
+        hasOPiece = False
+        for p in pieces:
+            hasOPiece = hasOPiece or p.name == "O"
+        
         for row in self.tiles:
             for tile in row:
                 if tile.piece is not None:
@@ -111,7 +119,20 @@ class Board:
 
                 region = self.region(tile, set())
                 regions.append(region)
-                if len(region) < 5:
+                
+                if not hasOPiece:
+                    # All the pieces left are of size 5
+                    # So each region has to be a multiple of 5
+                    if len(region) % 5 != 0:
+                        return True
+                elif len(pieces) == 1:
+                    # Only the O piece is remaining, so the remaining area has to be 6
+                    if len(region) != 6:
+                        return True
+                    
+                # Else we have a mix of pieces and can't prune as well
+                validAreas = [5, 6, 10, 11, 12, 15, 16, 17, 18] # all perms of 5 or 6 up to 20 (after that all areas are okay)
+                if len(region) < 20 and len(region) not in validAreas:
                     return True
         return False
 
@@ -123,14 +144,14 @@ class Board:
                     t1 = self.tiles[j][i-1]  # Scans down the ith column
                     if t1.piece is None:
                         return t1
-                except IndexError:
+                except IndexError: # Out of bounds
                     pass
 
                 try:
                     t2 = self.tiles[i-1][j]  # Scans across the ith row
                     if t2.piece is None:
                         return t2
-                except IndexError:
+                except IndexError: # Out of bounds
                     pass
         return None  # The board is full
 
@@ -142,16 +163,21 @@ class Board:
                     return tile, Coord(x, y)
 
         raise KeyError(f"{date} not found")
-
-    def __hash__(self) -> int:
-        """Flattens the board into a string and returns the hash of that string"""
+    
+    def toString(self) -> str:
+        """Flattens the board into a string"""
         boardAsList = []
         for row in self.tiles:
             for tile in row:
                 boardAsList.append(
                     tile.piece.name if tile.piece is not None and tile.piece.name != "" else tile.date)
         result = ','.join(boardAsList)
-        return hash(result)
+        return result
+        
+
+    def __hash__(self) -> int:
+        """Flattens the board into a string and returns the hash of that string"""
+        return hash(self.toString())
 
     def __repr__(self) -> str:
         """A nice print out version of the board"""
@@ -162,3 +188,25 @@ class Board:
                 result += repr(tile).ljust(4)
             result += "\n"
         return result
+    
+def toCsv(board: str) -> List[str]:
+    """Converts a string version of a board into a csv representation"""
+    boardAsList = board.split(",")
+    # Annoyingly, the board is of a weird shape
+    # rowLens = [6,6,7,7,7,7,3]
+    result = []
+    boardAsListList = [
+        boardAsList[0:6],
+        boardAsList[6:12],
+        boardAsList[12:19],
+        boardAsList[19:26],
+        boardAsList[26:33],
+        boardAsList[33:40],
+        boardAsList[40:]
+    ]
+    for row in boardAsListList:
+        csvLine = ",".join(row)
+        csvLine += "\n"
+        result.append(csvLine)
+    result.append("\n")
+    return result

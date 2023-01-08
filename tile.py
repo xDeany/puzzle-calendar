@@ -5,7 +5,7 @@ from piece import Piece
 
 
 class Tile:
-    def __init__(self, date: str, piece: Piece = None, neigh: List = []):
+    def __init__(self, date: str, piece: Piece = None, neigh: List[Piece] = []):
         self.date = date
         self.piece = piece
         self.neigh = neigh
