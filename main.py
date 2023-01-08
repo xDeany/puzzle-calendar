@@ -11,47 +11,59 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 # These could be user input, but then I can't do 'python3 main.py > out.txt' without extra work
-MONTH="Oct"
-DATE="2"
+MONTH="Jan"
+DATE="8"
 
-def dfs(board: Board, pieces: List[Piece], states: Set[Board] = set()) -> Board:
+# Default behaviour is to only return the first solution the program finds
+# Setting FIND_ALL_SOLUTIONS to True will make the algorithm perform an exhaustive search for all possible solutions
+FIND_ALL_SOLUTIONS=False
+
+def dfs(board: Board, pieces: List[Piece], states: Set[Board] = set(), solutions: Set[Board] = set()) -> Set[Board]:
     logging.debug(board)
     
     if len(pieces) == 0:
         # We placed all the pieces! Success!
-        return board
+        logging.info(str(datetime.datetime.now()))
+        logging.info(board)
+        solutions.add(board)
+        return solutions
     
     targetTile = board.getTopLeft()
     logging.debug(f"top left tile: {targetTile}")
     
+    # Scan over all tiles in the board
     for y, row in enumerate(board.tiles):
         for x, _ in enumerate(row):
             # Try and place each piece there
             for piece in pieces:
+                # Try every rotation/reflection of the piece
                 for perm in getPerms(piece):
                     if board.place(perm, Coord(x, y)):
                         # Ayyy we managed to fit it in
                         logging.debug(f"placed {perm.name}")
                         
                         # Check if this placement covered the top left most available tile
+                        # This saves the program arbitrarily placing pieces in the middle of the board 
+                        # with no way of them ever fitting together
                         if targetTile.piece is None:
                             logging.debug(f"failed to cover {targetTile}")
                             board.remove(perm)
                             continue
                         
-                        # check if this created a dead region
+                        # check if this created a dead region (e.g. a space too small to fit any pieces in)
                         if board.hasDeadSpace():
                             logging.debug(f"created deadspace")
                             board.remove(perm)
                             continue
                         
-                        # check if we've seen this before
+                        # check if we've seen this partial solution before
                         if board in states:
                             logging.debug(f"visited this state already")
                             board.remove(perm)
                             continue
                         
-                        # track the new state
+                        # this is a new, and valid partial soltuion
+                        # track the new state for future reference
                         states.add(board)
                         
                         # make a copy of the pieces so we don't edit the original list
@@ -59,18 +71,18 @@ def dfs(board: Board, pieces: List[Piece], states: Set[Board] = set()) -> Board:
                         remainingPieces.remove(piece)
                         
                         # try to add the rest of the pieces
-                        result = dfs(board, remainingPieces, states)
+                        # keeping track of any solutions we find diving down this branch
+                        solutions = dfs(board, remainingPieces, states, solutions)
                         
-                        # if that worked, return the solution up the chain
-                        if result is not None:
-                            return result
+                        # if we only want the first solution, we can stop here
+                        if len(solutions) == 1 and not FIND_ALL_SOLUTIONS:
+                            return solutions
                         
-                        # Else, we couldn't solve the rest from here so remove whatever we just placed
-                        # and try another permuation/piece
+                        # we've exhausted this option, remove the piece and continue on to the next
                         board.remove(perm)
                     
-    # We failed to place any more pieces, go back a step!
-    return None
+    # Return any solutions we found
+    return solutions
 
 def main():
     # The puzzle board
@@ -107,7 +119,7 @@ def main():
     result = dfs(b, pieces)
     
     # Print the result
-    logging.info(result)
+    logging.info(f"Found {len(result)} solutions")
     
     # Record finish time & total time taken
     finish = datetime.datetime.now()

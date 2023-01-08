@@ -20,8 +20,11 @@ python3 -m pip install -r requirements.txt
 1. Edit the `MONTH` and `DATE` in `main.py` to whatever spaces should be left uncovered
 2. Run `$ python3 main.py`
 
-To capture debug logs, redirect the output to a file e.g.
-`$ python3 main.py > out.txt`
+### Exhaustive Search
+
+Change `FIND_ALL_SOLUTIONS` to `True` to have the program perform an exhaustive search for all the possible solutions.
+
+**warning:** may take minutes or even hours to complete
 
 ## Understanding the solution
 
