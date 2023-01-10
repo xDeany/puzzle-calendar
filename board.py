@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 from piece import Coord, Piece
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 from tile import Tile
 import logging
@@ -19,14 +19,14 @@ class Board:
         if not self.canPlace(p, dest):
             return False
         for coord in p.coords:
-            self.tiles[dest.y + coord.y][dest.x + coord.x].piece = p
+            self.tiles[dest[0] + coord[0]][dest[1] + coord[1]].piece = p
         return True
 
     def canPlace(self, p: Piece, dest: Coord) -> bool:
         """Checks if a piece can be placed at the corresponding coordinate"""
         for coord in p.coords:
             try:
-                target = self.tiles[dest.y + coord.y][dest.x + coord.x]
+                target = self.tiles[dest[0] + coord[0]][dest[1] + coord[1]]
                 if target.piece != None:
                     # There's already a piece there
                     return False
@@ -48,25 +48,20 @@ class Board:
     def getNeighbours(self, tile: Tile) -> List[Tile]:
         """Gets the immediate uncovered neighbours of a tile"""
         result = []
-        diffs = [1, -1]
+        offsets = [
+            (-1, 0),
+            (1, 0),
+            (0, -1),
+            (0, 1)
+        ]
         _, coord = self.find(tile.date)
-        for diffY in diffs:
-            newY = coord.y + diffY
-            if newY == -1:
+        for offset in offsets:
+            newY = coord[0] + offset[0]
+            newX = coord[1] + offset[1]
+            if newY == -1 or newX == -1:
                 continue
             try:
-                neigh = self.tiles[newY][coord.x]
-                if neigh.piece == None:
-                    result.append(neigh)
-            except IndexError:
-                continue
-
-        for diffX in diffs:
-            newX = coord.x + diffX
-            if newX == -1:
-                continue
-            try:
-                neigh = self.tiles[coord.y][newX]
+                neigh = self.tiles[newY][newX]
                 if neigh.piece == None:
                     result.append(neigh)
             except IndexError:
@@ -93,7 +88,7 @@ class Board:
                 if tile.piece is not None and tile.piece.name == piece.name:
                     tile.piece = None
 
-    def hasDeadSpace(self, pieces: List[Piece]) -> bool:
+    def hasDeadSpace(self, pieces: Dict[str, List[Piece]]) -> bool:
         """True if there's a region of the board too small for a piece to be placed there (e.g. a single tile)"""
         self.updateNeighbours()
         regions = []
@@ -102,8 +97,8 @@ class Board:
         # If that's been placed already, we can be smarter with the maths
         # Likewise, if that's the only piece left, the area remaining must be 6
         hasOPiece = False
-        for p in pieces:
-            hasOPiece = hasOPiece or p.name == "O"
+        for p in pieces.keys():
+            hasOPiece = hasOPiece or p == "O"
         
         for row in self.tiles:
             for tile in row:
@@ -160,7 +155,7 @@ class Board:
         for y, row in enumerate(self.tiles):
             for x, tile in enumerate(row):
                 if tile.date == date:
-                    return tile, Coord(x, y)
+                    return tile, (y, x)
 
         raise KeyError(f"{date} not found")
     

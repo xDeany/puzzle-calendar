@@ -1,16 +1,9 @@
 #!/usr/bin/python3
 
-from typing import List
+from typing import List, Tuple
 import numpy as np
 
-
-class Coord:
-    """Not really needed, but it made it easier for me to think about the board indexes as my own coordinate system"""
-
-    def __init__(self, x: int, y: int) -> None:
-        self.x = x
-        self.y = y
-
+Coord = Tuple[int, int]
 
 class Piece:
     def __init__(self, name: str = "", coords: List[Coord] = [], matrix: np.ndarray = None):
@@ -26,14 +19,14 @@ class Piece:
 
 def toCoords(matrix: np.ndarray) -> List[Coord]:
     """Helper function. Generates a list of coordinates from a matrix."""
-    result: List[Coord] = []
+    result = []
 
     # Get the indexes of all non-zero values in the matrix
     mIndices = np.argwhere(matrix)
 
     # Create a Coord object from each index
     for idx in mIndices:
-        coord = Coord(y=idx[0], x=idx[1])
+        coord = (idx[0], idx[1])
         result.append(coord)
 
     return result
@@ -46,8 +39,8 @@ def toMatrix(coords: List[Coord]) -> np.ndarray:
     maxX = 0
     maxY = 0
     for coord in coords:
-        maxX = coord.x if coord.x > maxX else maxX
-        maxY = coord.y if coord.y > maxY else maxY
+        maxY = coord[0] if coord[0] > maxY else maxY
+        maxX = coord[1] if coord[1] > maxX else maxX
     max = maxX if maxX > maxY else maxY
 
     # Initialise a zero matrix of that size
@@ -55,7 +48,7 @@ def toMatrix(coords: List[Coord]) -> np.ndarray:
 
     # Set each coordinate to a '1' in the matrix
     for coord in coords:
-        result[coord.y, coord.x] = 1
+        result[coord[0], coord[1]] = 1
 
     return result
 
